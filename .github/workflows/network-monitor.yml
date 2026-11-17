@@ -1,6 +1,9 @@
 name: Global Network Monitor
 
 on:
+  schedule:
+    - cron: "7,22,37,52 * * * *"
+  
   workflow_dispatch:
 
 permissions:
