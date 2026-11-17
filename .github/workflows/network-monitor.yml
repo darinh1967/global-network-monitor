@@ -43,7 +43,7 @@ jobs:
 
         run: python monitor.py
 
-            - name: Save monitoring state
+      - name: Save monitoring state
         run: |
           FILES_TO_SAVE=""
 
