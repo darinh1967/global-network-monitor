@@ -1,4 +1,220 @@
 {
-  "events": {},
-  "correlations": {}
+  "correlations": {
+    "2caec192d5451fad687b": {
+      "alert_count": 0,
+      "confidence": "CONFIRMED",
+      "confidence_reasons": [
+        "At least one structured source +30",
+        "Second independent source +30",
+        "Third independent source +20",
+        "Official acknowledgment +20",
+        "Shared infrastructure +15",
+        "Matching time window +10"
+      ],
+      "confidence_score": 100,
+      "event_ids": [
+        "syn-cross-1",
+        "syn-cross-2",
+        "syn-cross-3"
+      ],
+      "first_seen": "2026-11-17T20:51:08.659009+00:00",
+      "last_action": "NEW_CORRELATION",
+      "last_alerted": null,
+      "last_seen": "2026-11-17T20:51:08.659011+00:00",
+      "organization_ids": [
+        "faa",
+        "mastercard",
+        "microsoft"
+      ],
+      "organization_names": [
+        "Federal Aviation Administration",
+        "Mastercard",
+        "Microsoft"
+      ],
+      "score": 100,
+      "score_reasons": [
+        "3-4 organizations +30",
+        "3 sectors +25",
+        "Shared infrastructure +20",
+        "National/global scope +15",
+        "3+ independent sources +20"
+      ],
+      "sector": null,
+      "sectors": [
+        "federal_government",
+        "payments",
+        "technology"
+      ],
+      "severity": "CRITICAL",
+      "shared_infrastructure": [
+        "akamai"
+      ],
+      "sources": [
+        "source_gov",
+        "source_ms",
+        "source_pay"
+      ],
+      "status": "ONGOING",
+      "time_span_minutes": 36.0,
+      "type": "CROSS_SECTOR"
+    },
+    "46602e142cbf8d1215b6": {
+      "alert_count": 0,
+      "confidence": "CONFIRMED",
+      "confidence_reasons": [
+        "At least one structured source +30",
+        "Second independent source +30",
+        "Third independent source +20",
+        "Official acknowledgment +20",
+        "Matching time window +10"
+      ],
+      "confidence_score": 100,
+      "event_ids": [
+        "syn-bank-1",
+        "syn-bank-2",
+        "syn-bank-3"
+      ],
+      "first_seen": "2026-11-17T20:51:08.658940+00:00",
+      "last_action": "NEW_CORRELATION",
+      "last_alerted": null,
+      "last_seen": "2026-11-17T20:51:08.658943+00:00",
+      "organization_ids": [
+        "bank_of_america",
+        "jpmorgan_chase",
+        "wells_fargo"
+      ],
+      "organization_names": [
+        "Bank of America",
+        "JPMorgan Chase",
+        "Wells Fargo"
+      ],
+      "score": 70,
+      "score_reasons": [
+        "3-4 organizations +30",
+        "3+ organizations in one sector +20",
+        "3+ independent sources +20"
+      ],
+      "sector": "financial",
+      "sectors": [
+        "financial"
+      ],
+      "severity": "HIGH",
+      "shared_infrastructure": [],
+      "sources": [
+        "source_a",
+        "source_b",
+        "source_c"
+      ],
+      "status": "ONGOING",
+      "time_span_minutes": 31.0,
+      "type": "SAME_SECTOR"
+    }
+  },
+  "events": {
+    "cloudflare-1749": {
+      "description": "A global Microsoft 365 disruption impacted Exchange Online and dependent services, including Outlook, Copilot and Teams calendar features. Microsoft said a large number of servers had become unexpectedly unavailable.",
+      "ended": null,
+      "first_seen": "2026-11-17T20:51:09.049721+00:00",
+      "last_seen": "2026-11-17T20:51:09.049727+00:00",
+      "organization_ids": [
+        "microsoft"
+      ],
+      "sectors": [
+        "technology"
+      ],
+      "source": "cloudflare_radar",
+      "started": "2026-11-12T16:17:00+00:00",
+      "status": "ONGOING"
+    },
+    "syn-bank-1": {
+      "description": "JPMorgan Chase online banking is experiencing problems.",
+      "ended": null,
+      "first_seen": "2026-11-17T20:51:08.658677+00:00",
+      "last_seen": "2026-11-17T20:51:08.658686+00:00",
+      "organization_ids": [
+        "jpmorgan_chase"
+      ],
+      "sectors": [
+        "financial"
+      ],
+      "source": "source_a",
+      "started": "2026-11-17T18:00:00+00:00",
+      "status": "ONGOING"
+    },
+    "syn-bank-2": {
+      "description": "Bank of America customers report online banking failures.",
+      "ended": null,
+      "first_seen": "2026-11-17T20:51:08.658691+00:00",
+      "last_seen": "2026-11-17T20:51:08.658693+00:00",
+      "organization_ids": [
+        "bank_of_america"
+      ],
+      "sectors": [
+        "financial"
+      ],
+      "source": "source_b",
+      "started": "2026-11-17T18:18:00+00:00",
+      "status": "ONGOING"
+    },
+    "syn-bank-3": {
+      "description": "Wells Fargo digital banking services are unavailable.",
+      "ended": null,
+      "first_seen": "2026-11-17T20:51:08.658696+00:00",
+      "last_seen": "2026-11-17T20:51:08.658697+00:00",
+      "organization_ids": [
+        "wells_fargo"
+      ],
+      "sectors": [
+        "financial"
+      ],
+      "source": "source_c",
+      "started": "2026-11-17T18:31:00+00:00",
+      "status": "ONGOING"
+    },
+    "syn-cross-1": {
+      "description": "Microsoft 365 and Outlook are experiencing a global outage.",
+      "ended": null,
+      "first_seen": "2026-11-17T20:51:08.658700+00:00",
+      "last_seen": "2026-11-17T20:51:08.658701+00:00",
+      "organization_ids": [
+        "microsoft"
+      ],
+      "sectors": [
+        "technology"
+      ],
+      "source": "source_ms",
+      "started": "2026-11-17T20:00:00+00:00",
+      "status": "ONGOING"
+    },
+    "syn-cross-2": {
+      "description": "Mastercard payment processing is experiencing widespread failures.",
+      "ended": null,
+      "first_seen": "2026-11-17T20:51:08.658703+00:00",
+      "last_seen": "2026-11-17T20:51:08.658705+00:00",
+      "organization_ids": [
+        "mastercard"
+      ],
+      "sectors": [
+        "payments"
+      ],
+      "source": "source_pay",
+      "started": "2026-11-17T20:17:00+00:00",
+      "status": "ONGOING"
+    },
+    "syn-cross-3": {
+      "description": "Federal Aviation Administration online services are unavailable.",
+      "ended": null,
+      "first_seen": "2026-11-17T20:51:08.658706+00:00",
+      "last_seen": "2026-11-17T20:51:08.658708+00:00",
+      "organization_ids": [
+        "faa"
+      ],
+      "sectors": [
+        "federal_government"
+      ],
+      "source": "source_gov",
+      "started": "2026-11-17T20:36:00+00:00",
+      "status": "ONGOING"
+    }
+  }
 }
