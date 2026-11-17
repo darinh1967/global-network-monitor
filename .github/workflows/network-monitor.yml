@@ -43,9 +43,24 @@ jobs:
 
         run: python monitor.py
 
-      - name: Save incident history
+            - name: Save monitoring state
         run: |
-          if git diff --quiet -- state.json && git ls-files --error-unmatch state.json >/dev/null 2>&1; then
+          FILES_TO_SAVE=""
+
+          if [ -f state.json ]; then
+            FILES_TO_SAVE="$FILES_TO_SAVE state.json"
+          fi
+
+          if [ -f correlation-state.json ]; then
+            FILES_TO_SAVE="$FILES_TO_SAVE correlation-state.json"
+          fi
+
+          if [ -z "$FILES_TO_SAVE" ]; then
+            echo "No state files were found."
+            exit 0
+          fi
+
+          if git diff --quiet -- $FILES_TO_SAVE; then
             echo "No state changes to save."
             exit 0
           fi
@@ -53,6 +68,6 @@ jobs:
           git config user.name "global-network-monitor"
           git config user.email "global-network-monitor@users.noreply.github.com"
 
-          git add state.json
-          git commit -m "Update network monitoring state [skip ci]"
+          git add $FILES_TO_SAVE
+          git commit -m "Update monitoring state [skip ci]"
           git push
