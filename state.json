@@ -1,0 +1,17 @@
+{
+  "events": {
+    "91365d6bd17757afa82f": {
+      "alert_count": 1,
+      "asns": "Unknown",
+      "description": "A global Microsoft 365 disruption impacted Exchange Online and dependent services, including Outlook, Copilot and Teams calendar features. Microsoft said a large number of servers had become unexpectedly unavailable.",
+      "ended": "ONGOING",
+      "first_seen": "2026-11-17T20:16:41.045340+00:00",
+      "last_seen": "2026-11-17T20:16:41.045340+00:00",
+      "location": "Unknown",
+      "score": 65,
+      "severity": "HIGH",
+      "started": "2026-11-12T16:17:00Z",
+      "status": "ONGOING"
+    }
+  }
+}
