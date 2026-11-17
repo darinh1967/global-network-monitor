@@ -1,10 +1,16 @@
 import os
 import sys
+import json
+import hashlib
+from datetime import datetime, timezone
+from pathlib import Path
+
 import requests
 
 
 # ============================================================
-# GLOBAL NETWORK MONITOR - DRY RUN VERSION
+# GLOBAL NETWORK MONITOR
+# DEDUPLICATION DRY-RUN VERSION
 #
 # This version DOES NOT send email.
 #
@@ -12,8 +18,11 @@ import requests
 #   1. Connects to Cloudflare Radar
 #   2. Retrieves recent Internet outage events
 #   3. Scores each event from 0-100
-#   4. Classifies the event as LOW/MEDIUM/HIGH/CRITICAL
-#   5. Shows whether an email WOULD be sent
+#   4. Classifies LOW/MEDIUM/HIGH/CRITICAL
+#   5. Creates a unique fingerprint for each incident
+#   6. Remembers incidents in state.json
+#   7. Detects new, duplicate, escalated, and resolved events
+#   8. Shows whether an email WOULD be sent
 # ============================================================
 
 
@@ -21,6 +30,11 @@ CLOUDFLARE_URL = (
     "https://api.cloudflare.com/client/v4/"
     "radar/annotations/outages"
 )
+
+STATE_FILE = Path("state.json")
+
+HIGH_THRESHOLD = 60
+CRITICAL_THRESHOLD = 80
 
 
 # ============================================================
@@ -63,21 +77,114 @@ MAJOR_NETWORK_PROVIDERS = [
 
 
 # ============================================================
-# SCORING THRESHOLDS
+# TIME
 # ============================================================
 
-HIGH_THRESHOLD = 60
-CRITICAL_THRESHOLD = 80
+def current_time():
+
+    return datetime.now(
+        timezone.utc
+    ).isoformat()
 
 
 # ============================================================
-# HELPER FUNCTION
+# STATE MANAGEMENT
+# ============================================================
+
+def load_state():
+
+    if not STATE_FILE.exists():
+
+        print(
+            "No previous state.json found."
+        )
+
+        print(
+            "Starting with an empty incident database."
+        )
+
+        return {
+            "events": {}
+        }
+
+    try:
+
+        with STATE_FILE.open(
+            "r",
+            encoding="utf-8"
+        ) as file:
+
+            state = json.load(file)
+
+        state.setdefault(
+            "events",
+            {}
+        )
+
+        print(
+            f"Loaded {len(state['events'])} "
+            f"previous incident(s) from state.json."
+        )
+
+        return state
+
+    except Exception as error:
+
+        print()
+        print("WARNING:")
+        print(
+            "state.json could not be read."
+        )
+
+        print(
+            f"Reason: {error}"
+        )
+
+        print(
+            "Starting with an empty incident database."
+        )
+
+        return {
+            "events": {}
+        }
+
+
+def save_state(state):
+
+    temporary_file = Path(
+        "state.json.tmp"
+    )
+
+    with temporary_file.open(
+        "w",
+        encoding="utf-8"
+    ) as file:
+
+        json.dump(
+            state,
+            file,
+            indent=2,
+            sort_keys=True,
+        )
+
+        file.write("\n")
+
+    temporary_file.replace(
+        STATE_FILE
+    )
+
+    print()
+    print(
+        f"Saved {len(state['events'])} "
+        f"incident(s) to state.json."
+    )
+
+
+# ============================================================
+# HELPER
 # ============================================================
 
 def contains_any(text, terms):
-    """
-    Returns True if any term occurs in the supplied text.
-    """
 
     text = str(text).lower()
 
@@ -88,26 +195,35 @@ def contains_any(text, terms):
 
 
 # ============================================================
-# DOWNLOAD OUTAGES FROM CLOUDFLARE RADAR
+# DOWNLOAD OUTAGES
 # ============================================================
 
 def get_outages():
 
-    print("Connecting to Cloudflare Radar...")
+    print(
+        "Connecting to Cloudflare Radar..."
+    )
 
-    token = os.environ.get("CLOUDFLARE_API_TOKEN", "").strip()
+    token = os.environ.get(
+        "CLOUDFLARE_API_TOKEN",
+        ""
+    ).strip()
 
     if not token:
+
         print()
-        print("ERROR:")
-        print("CLOUDFLARE_API_TOKEN was not found.")
-        print()
+        print(
+            "ERROR: CLOUDFLARE_API_TOKEN "
+            "was not found."
+        )
+
         sys.exit(1)
 
     headers = {
         "Authorization": f"Bearer {token}",
         "Accept": "application/json",
-        "User-Agent": "global-network-monitor/1.0",
+        "User-Agent":
+            "global-network-monitor/1.0",
     }
 
     params = {
@@ -126,8 +242,8 @@ def get_outages():
         )
 
         print(
-            f"Cloudflare HTTP status: "
-            f"{response.status_code}"
+            "Cloudflare HTTP status:",
+            response.status_code
         )
 
         response.raise_for_status()
@@ -135,7 +251,10 @@ def get_outages():
     except requests.exceptions.RequestException as error:
 
         print()
-        print("ERROR connecting to Cloudflare Radar:")
+        print(
+            "ERROR connecting to Cloudflare Radar:"
+        )
+
         print(error)
 
         sys.exit(1)
@@ -147,52 +266,88 @@ def get_outages():
     except ValueError:
 
         print()
-        print("ERROR:")
-        print("Cloudflare returned invalid JSON.")
+        print(
+            "ERROR: Cloudflare returned invalid JSON."
+        )
 
         sys.exit(1)
 
     if data.get("success") is False:
 
         print()
-        print("Cloudflare API reported an error:")
-        print(data.get("errors"))
+        print(
+            "Cloudflare API reported an error:"
+        )
+
+        print(
+            data.get("errors")
+        )
 
         sys.exit(1)
 
-    result = data.get("result", {})
+    result = data.get(
+        "result",
+        {}
+    )
 
-    outages = result.get("annotations", [])
-
-    return outages
+    return result.get(
+        "annotations",
+        []
+    )
 
 
 # ============================================================
-# NORMALIZE CLOUDFLARE EVENT
+# NORMALIZE EVENT
 # ============================================================
 
 def normalize_event(raw_event):
 
-    outage = raw_event.get("outage") or {}
+    outage = (
+        raw_event.get("outage")
+        or {}
+    )
 
-    locations = raw_event.get("locations") or []
-    asns = raw_event.get("asns") or []
+    locations = (
+        raw_event.get("locations")
+        or []
+    )
 
-    if isinstance(locations, list):
+    asns = (
+        raw_event.get("asns")
+        or []
+    )
+
+    if isinstance(
+        locations,
+        list
+    ):
+
         location_text = ", ".join(
             str(location)
             for location in locations
         )
-    else:
-        location_text = str(locations)
 
-    if isinstance(asns, list):
+    else:
+
+        location_text = str(
+            locations
+        )
+
+    if isinstance(
+        asns,
+        list
+    ):
+
         asn_text = ", ".join(
             str(asn)
             for asn in asns
         )
+
     else:
-        asn_text = str(asns)
+
+        asn_text = str(
+            asns
+        )
 
     description = (
         raw_event.get("description")
@@ -224,7 +379,9 @@ def normalize_event(raw_event):
         or "Unknown"
     )
 
-    ended = raw_event.get("endDate")
+    ended = raw_event.get(
+        "endDate"
+    )
 
     status = (
         "RESOLVED"
@@ -233,18 +390,77 @@ def normalize_event(raw_event):
     )
 
     return {
-        "locations": location_text or "Unknown",
-        "asns": asn_text or "Unknown",
-        "description": description,
-        "scope": scope,
-        "outage_type": outage_type,
-        "cause": cause,
-        "event_type": event_type,
-        "started": started,
-        "ended": ended or "ONGOING",
-        "status": status,
-        "source_url": raw_event.get("linkedUrl") or "",
+        "locations":
+            location_text or "Unknown",
+
+        "asns":
+            asn_text or "Unknown",
+
+        "description":
+            description,
+
+        "scope":
+            scope,
+
+        "outage_type":
+            outage_type,
+
+        "cause":
+            cause,
+
+        "event_type":
+            event_type,
+
+        "started":
+            started,
+
+        "ended":
+            ended or "ONGOING",
+
+        "status":
+            status,
+
+        "source_url":
+            raw_event.get(
+                "linkedUrl"
+            ) or "",
     }
+
+
+# ============================================================
+# CREATE INCIDENT FINGERPRINT
+# ============================================================
+
+def create_fingerprint(event):
+
+    """
+    Creates a stable ID for an incident.
+
+    IMPORTANT:
+
+    We deliberately DO NOT include end time or current
+    status in the fingerprint.
+
+    Otherwise the same incident would receive a new ID
+    when it changed from ONGOING to RESOLVED.
+    """
+
+    fingerprint_data = "|".join([
+        event["started"],
+        event["event_type"],
+        event["outage_type"],
+        event["locations"],
+        event["asns"],
+        event["description"],
+    ])
+
+    fingerprint = hashlib.sha256(
+        fingerprint_data.encode(
+            "utf-8"
+        )
+    ).hexdigest()
+
+    return fingerprint[:20]
 
 
 # ============================================================
@@ -254,6 +470,7 @@ def normalize_event(raw_event):
 def calculate_score(event):
 
     score = 0
+
     reasons = []
 
     searchable_text = " ".join([
@@ -266,9 +483,15 @@ def calculate_score(event):
         event["event_type"],
     ]).lower()
 
-    outage_type = event["outage_type"].lower()
+    outage_type = (
+        event["outage_type"]
+        .lower()
+    )
 
-    scope = event["scope"].lower()
+    scope = (
+        event["scope"]
+        .lower()
+    )
 
 
     # --------------------------------------------------------
@@ -310,12 +533,12 @@ def calculate_score(event):
 
 
     # --------------------------------------------------------
-    # MAJOR CLOUD PROVIDERS
+    # CLOUD PROVIDER
     # --------------------------------------------------------
 
     if contains_any(
         searchable_text,
-        MAJOR_CLOUD_PROVIDERS,
+        MAJOR_CLOUD_PROVIDERS
     ):
 
         score += 35
@@ -326,12 +549,12 @@ def calculate_score(event):
 
 
     # --------------------------------------------------------
-    # CDN / DNS PROVIDERS
+    # CDN / DNS
     # --------------------------------------------------------
 
     if contains_any(
         searchable_text,
-        MAJOR_CDN_DNS_PROVIDERS,
+        MAJOR_CDN_DNS_PROVIDERS
     ):
 
         score += 30
@@ -342,12 +565,12 @@ def calculate_score(event):
 
 
     # --------------------------------------------------------
-    # MAJOR NETWORK PROVIDERS
+    # NETWORK CARRIER
     # --------------------------------------------------------
 
     if contains_any(
         searchable_text,
-        MAJOR_NETWORK_PROVIDERS,
+        MAJOR_NETWORK_PROVIDERS
     ):
 
         score += 25
@@ -361,11 +584,9 @@ def calculate_score(event):
     # MULTIPLE ASNs
     # --------------------------------------------------------
 
-    asn_text = event["asns"]
-
     if (
-        asn_text != "Unknown"
-        and "," in asn_text
+        event["asns"] != "Unknown"
+        and "," in event["asns"]
     ):
 
         score += 15
@@ -376,7 +597,7 @@ def calculate_score(event):
 
 
     # --------------------------------------------------------
-    # ONGOING EVENT
+    # ONGOING
     # --------------------------------------------------------
 
     if event["status"] == "ONGOING":
@@ -389,7 +610,7 @@ def calculate_score(event):
 
 
     # --------------------------------------------------------
-    # BROAD / GLOBAL LANGUAGE
+    # GLOBAL / BROAD EFFECT
     # --------------------------------------------------------
 
     broad_terms = [
@@ -401,7 +622,7 @@ def calculate_score(event):
 
     if contains_any(
         searchable_text,
-        broad_terms,
+        broad_terms
     ):
 
         score += 20
@@ -411,41 +632,204 @@ def calculate_score(event):
         )
 
 
-    # Never allow a score above 100.
-
-    score = min(score, 100)
+    score = min(
+        score,
+        100
+    )
 
     return score, reasons
 
 
 # ============================================================
-# DETERMINE SEVERITY
+# SEVERITY
 # ============================================================
 
 def determine_severity(score):
 
     if score >= CRITICAL_THRESHOLD:
+
         return "CRITICAL"
 
     if score >= HIGH_THRESHOLD:
+
         return "HIGH"
 
     if score >= 40:
+
         return "MEDIUM"
 
     return "LOW"
 
 
 # ============================================================
-# DETERMINE WHETHER WE WOULD EMAIL
+# NUMBER USED FOR ESCALATION COMPARISON
 # ============================================================
 
-def would_send_alert(severity):
+def severity_level(severity):
 
-    return severity in [
-        "HIGH",
-        "CRITICAL",
-    ]
+    levels = {
+        "LOW": 1,
+        "MEDIUM": 2,
+        "HIGH": 3,
+        "CRITICAL": 4,
+    }
+
+    return levels.get(
+        severity,
+        0
+    )
+
+
+# ============================================================
+# DETERMINE INCIDENT ACTION
+# ============================================================
+
+def determine_action(
+    event,
+    score,
+    severity,
+    previous_event,
+):
+
+    """
+    Possible return values:
+
+    NEW_ALERT
+    NEW_NO_ALERT
+    DUPLICATE
+    ESCALATED
+    RESOLVED
+    UPDATED
+    """
+
+    # --------------------------------------------------------
+    # WE HAVE NEVER SEEN THIS INCIDENT
+    # --------------------------------------------------------
+
+    if previous_event is None:
+
+        if severity in [
+            "HIGH",
+            "CRITICAL"
+        ]:
+
+            return "NEW_ALERT"
+
+        return "NEW_NO_ALERT"
+
+
+    previous_status = (
+        previous_event.get(
+            "status",
+            "UNKNOWN"
+        )
+    )
+
+    previous_severity = (
+        previous_event.get(
+            "severity",
+            "LOW"
+        )
+    )
+
+    previous_score = int(
+        previous_event.get(
+            "score",
+            0
+        )
+    )
+
+
+    # --------------------------------------------------------
+    # INCIDENT HAS RESOLVED
+    # --------------------------------------------------------
+
+    if (
+        previous_status == "ONGOING"
+        and event["status"] == "RESOLVED"
+    ):
+
+        return "RESOLVED"
+
+
+    # --------------------------------------------------------
+    # SEVERITY HAS MOVED UP
+    # --------------------------------------------------------
+
+    if (
+        severity_level(severity)
+        >
+        severity_level(
+            previous_severity
+        )
+    ):
+
+        return "ESCALATED"
+
+
+    # --------------------------------------------------------
+    # SCORE JUMPED SUBSTANTIALLY
+    # --------------------------------------------------------
+
+    if (
+        score
+        >=
+        previous_score + 15
+    ):
+
+        return "ESCALATED"
+
+
+    # --------------------------------------------------------
+    # NOTHING IMPORTANT CHANGED
+    # --------------------------------------------------------
+
+    if (
+        event["status"]
+        ==
+        previous_status
+
+        and
+
+        severity
+        ==
+        previous_severity
+    ):
+
+        return "DUPLICATE"
+
+
+    return "UPDATED"
+
+
+# ============================================================
+# WOULD WE SEND EMAIL?
+# ============================================================
+
+def would_send_email(
+    action,
+    severity,
+):
+
+    if action == "NEW_ALERT":
+
+        return True
+
+    if (
+        action == "ESCALATED"
+        and severity in [
+            "HIGH",
+            "CRITICAL",
+        ]
+    ):
+
+        return True
+
+    if action == "RESOLVED":
+
+        return True
+
+    return False
 
 
 # ============================================================
@@ -454,10 +838,12 @@ def would_send_alert(severity):
 
 def display_event(
     event_number,
+    incident_id,
     event,
     score,
     severity,
     reasons,
+    action,
 ):
 
     print()
@@ -470,6 +856,10 @@ def display_event(
     print("=" * 65)
 
     print(
+        f"Incident ID:   {incident_id}"
+    )
+
+    print(
         f"Severity:      {severity}"
     )
 
@@ -479,6 +869,10 @@ def display_event(
 
     print(
         f"Status:        {event['status']}"
+    )
+
+    print(
+        f"Dedup action:  {action}"
     )
 
     print(
@@ -510,14 +904,18 @@ def display_event(
     )
 
     print()
-    print("Description:")
+    print(
+        "Description:"
+    )
 
     print(
         event["description"]
     )
 
     print()
-    print("Scoring:")
+    print(
+        "Scoring:"
+    )
 
     if reasons:
 
@@ -535,10 +933,13 @@ def display_event(
 
     print()
 
-    if would_send_alert(severity):
+    if would_send_email(
+        action,
+        severity,
+    ):
 
         print(
-            ">>> WOULD SEND EMAIL ALERT <<<"
+            ">>> WOULD SEND EMAIL <<<"
         )
 
     else:
@@ -557,16 +958,107 @@ def display_event(
 
 
 # ============================================================
-# MAIN PROGRAM
+# UPDATE STATE
+# ============================================================
+
+def update_state(
+    state,
+    incident_id,
+    event,
+    score,
+    severity,
+    action,
+):
+
+    existing = (
+        state["events"]
+        .get(
+            incident_id,
+            {}
+        )
+    )
+
+    now = current_time()
+
+    first_seen = (
+        existing.get(
+            "first_seen"
+        )
+        or now
+    )
+
+    alert_count = int(
+        existing.get(
+            "alert_count",
+            0
+        )
+    )
+
+    if would_send_email(
+        action,
+        severity,
+    ):
+
+        alert_count += 1
+
+    state["events"][
+        incident_id
+    ] = {
+
+        "first_seen":
+            first_seen,
+
+        "last_seen":
+            now,
+
+        "started":
+            event["started"],
+
+        "ended":
+            event["ended"],
+
+        "status":
+            event["status"],
+
+        "score":
+            score,
+
+        "severity":
+            severity,
+
+        "location":
+            event["locations"],
+
+        "asns":
+            event["asns"],
+
+        "description":
+            event["description"],
+
+        "alert_count":
+            alert_count,
+    }
+
+
+# ============================================================
+# MAIN
 # ============================================================
 
 def main():
 
     print()
     print("=" * 65)
-    print(" GLOBAL NETWORK MONITOR")
-    print(" DRY RUN - EMAIL DISABLED")
+    print(
+        " GLOBAL NETWORK MONITOR"
+    )
+    print(
+        " DEDUPLICATION DRY RUN - EMAIL DISABLED"
+    )
     print("=" * 65)
+    print()
+
+    state = load_state()
+
     print()
 
     outages = get_outages()
@@ -578,36 +1070,26 @@ def main():
         f"{len(outages)} outage event(s)."
     )
 
-    print()
 
-    if not outages:
+    # --------------------------------------------------------
+    # STATISTICS
+    # --------------------------------------------------------
 
-        print(
-            "No outage events were returned."
-        )
-
-        print()
-
-        print(
-            "Dry run completed successfully."
-        )
-
-        return
-
-
-    # Statistics for this run.
-
-    counts = {
-        "LOW": 0,
-        "MEDIUM": 0,
-        "HIGH": 0,
-        "CRITICAL": 0,
+    stats = {
+        "NEW_ALERT": 0,
+        "NEW_NO_ALERT": 0,
+        "DUPLICATE": 0,
+        "ESCALATED": 0,
+        "RESOLVED": 0,
+        "UPDATED": 0,
     }
 
-    alert_count = 0
+    emails_that_would_send = 0
 
 
-    # Examine each outage.
+    # --------------------------------------------------------
+    # PROCESS EVENTS
+    # --------------------------------------------------------
 
     for event_number, raw_event in enumerate(
         outages,
@@ -618,26 +1100,76 @@ def main():
             raw_event
         )
 
-        score, reasons = calculate_score(
-            event
+        incident_id = (
+            create_fingerprint(
+                event
+            )
         )
 
-        severity = determine_severity(
-            score
+        score, reasons = (
+            calculate_score(
+                event
+            )
         )
 
-        counts[severity] += 1
+        severity = (
+            determine_severity(
+                score
+            )
+        )
 
-        if would_send_alert(severity):
-            alert_count += 1
+        previous_event = (
+            state["events"]
+            .get(
+                incident_id
+            )
+        )
+
+        action = (
+            determine_action(
+                event,
+                score,
+                severity,
+                previous_event,
+            )
+        )
+
+        stats[action] += 1
+
+        if would_send_email(
+            action,
+            severity,
+        ):
+
+            emails_that_would_send += 1
 
         display_event(
             event_number,
+            incident_id,
             event,
             score,
             severity,
             reasons,
+            action,
         )
+
+        update_state(
+            state,
+            incident_id,
+            event,
+            score,
+            severity,
+            action,
+        )
+
+
+    # --------------------------------------------------------
+    # SAVE NEW INCIDENT DATABASE
+    # --------------------------------------------------------
+
+    save_state(
+        state
+    )
 
 
     # --------------------------------------------------------
@@ -645,38 +1177,54 @@ def main():
     # --------------------------------------------------------
 
     print()
-    print()
     print("=" * 65)
-    print(" DRY RUN SUMMARY")
+    print(
+        " DEDUPLICATION DRY RUN SUMMARY"
+    )
     print("=" * 65)
 
     print()
 
     print(
-        f"Total events:      {len(outages)}"
+        f"Events returned:        "
+        f"{len(outages)}"
     )
 
     print(
-        f"Critical events:   {counts['CRITICAL']}"
+        f"New alert events:       "
+        f"{stats['NEW_ALERT']}"
     )
 
     print(
-        f"High events:       {counts['HIGH']}"
+        f"New events below limit: "
+        f"{stats['NEW_NO_ALERT']}"
     )
 
     print(
-        f"Medium events:     {counts['MEDIUM']}"
+        f"Duplicate events:       "
+        f"{stats['DUPLICATE']}"
     )
 
     print(
-        f"Low events:        {counts['LOW']}"
+        f"Escalated events:       "
+        f"{stats['ESCALATED']}"
+    )
+
+    print(
+        f"Resolved events:        "
+        f"{stats['RESOLVED']}"
+    )
+
+    print(
+        f"Other updates:          "
+        f"{stats['UPDATED']}"
     )
 
     print()
 
     print(
-        f"Emails that WOULD have been sent: "
-        f"{alert_count}"
+        "Emails that WOULD have been sent: "
+        f"{emails_that_would_send}"
     )
 
     print()
@@ -686,7 +1234,7 @@ def main():
     )
 
     print(
-        "This was a dry run only."
+        "This was a deduplication dry run only."
     )
 
     print()
@@ -697,8 +1245,9 @@ def main():
 
 
 # ============================================================
-# START PROGRAM
+# START
 # ============================================================
 
 if __name__ == "__main__":
+
     main()
