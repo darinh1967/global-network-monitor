@@ -1,0 +1,281 @@
+{
+  "organizations": {
+    "apple": {
+      "display_name": "Apple",
+      "sector": "technology",
+      "criticality": 30,
+      "aliases": [
+        "apple",
+        "icloud",
+        "app store",
+        "apple pay",
+        "facetime",
+        "imessage"
+      ]
+    },
+    "microsoft": {
+      "display_name": "Microsoft",
+      "sector": "technology",
+      "criticality": 35,
+      "aliases": [
+        "microsoft",
+        "microsoft 365",
+        "office 365",
+        "azure",
+        "outlook",
+        "teams"
+      ]
+    },
+    "amazon": {
+      "display_name": "Amazon",
+      "sector": "technology",
+      "criticality": 35,
+      "aliases": [
+        "amazon",
+        "amazon web services",
+        "aws"
+      ]
+    },
+    "google": {
+      "display_name": "Google",
+      "sector": "technology",
+      "criticality": 35,
+      "aliases": [
+        "google",
+        "google cloud",
+        "gcp",
+        "gmail",
+        "google workspace"
+      ]
+    },
+    "meta": {
+      "display_name": "Meta",
+      "sector": "technology",
+      "criticality": 30,
+      "aliases": [
+        "meta platforms",
+        "facebook",
+        "instagram",
+        "whatsapp"
+      ]
+    },
+    "jpmorgan_chase": {
+      "display_name": "JPMorgan Chase",
+      "sector": "financial",
+      "criticality": 25,
+      "aliases": [
+        "jpmorgan",
+        "jp morgan",
+        "jpmorgan chase",
+        "chase bank"
+      ]
+    },
+    "bank_of_america": {
+      "display_name": "Bank of America",
+      "sector": "financial",
+      "criticality": 25,
+      "aliases": [
+        "bank of america",
+        "bofa",
+        "merrill lynch"
+      ]
+    },
+    "wells_fargo": {
+      "display_name": "Wells Fargo",
+      "sector": "financial",
+      "criticality": 25,
+      "aliases": [
+        "wells fargo"
+      ]
+    },
+    "citibank": {
+      "display_name": "Citibank",
+      "sector": "financial",
+      "criticality": 25,
+      "aliases": [
+        "citibank",
+        "citigroup",
+        "citi bank"
+      ]
+    },
+    "capital_one": {
+      "display_name": "Capital One",
+      "sector": "financial",
+      "criticality": 25,
+      "aliases": [
+        "capital one"
+      ]
+    },
+    "visa": {
+      "display_name": "Visa",
+      "sector": "payments",
+      "criticality": 35,
+      "aliases": [
+        "visa payments",
+        "visa network",
+        "visa card"
+      ]
+    },
+    "mastercard": {
+      "display_name": "Mastercard",
+      "sector": "payments",
+      "criticality": 35,
+      "aliases": [
+        "mastercard",
+        "master card"
+      ]
+    },
+    "american_express": {
+      "display_name": "American Express",
+      "sector": "payments",
+      "criticality": 30,
+      "aliases": [
+        "american express",
+        "amex"
+      ]
+    },
+    "paypal": {
+      "display_name": "PayPal",
+      "sector": "payments",
+      "criticality": 30,
+      "aliases": [
+        "paypal",
+        "venmo"
+      ]
+    },
+    "nyse": {
+      "display_name": "New York Stock Exchange",
+      "sector": "financial_markets",
+      "criticality": 40,
+      "aliases": [
+        "new york stock exchange",
+        "nyse"
+      ]
+    },
+    "nasdaq": {
+      "display_name": "Nasdaq",
+      "sector": "financial_markets",
+      "criticality": 40,
+      "aliases": [
+        "nasdaq"
+      ]
+    },
+    "irs": {
+      "display_name": "Internal Revenue Service",
+      "sector": "federal_government",
+      "criticality": 30,
+      "aliases": [
+        "internal revenue service",
+        "irs.gov"
+      ]
+    },
+    "social_security": {
+      "display_name": "Social Security Administration",
+      "sector": "federal_government",
+      "criticality": 35,
+      "aliases": [
+        "social security administration",
+        "ssa.gov"
+      ]
+    },
+    "faa": {
+      "display_name": "Federal Aviation Administration",
+      "sector": "federal_government",
+      "criticality": 40,
+      "aliases": [
+        "federal aviation administration",
+        "faa.gov"
+      ]
+    },
+    "fema": {
+      "display_name": "FEMA",
+      "sector": "federal_government",
+      "criticality": 35,
+      "aliases": [
+        "federal emergency management agency",
+        "fema.gov"
+      ]
+    },
+    "usps": {
+      "display_name": "United States Postal Service",
+      "sector": "federal_government",
+      "criticality": 25,
+      "aliases": [
+        "united states postal service",
+        "usps.gov"
+      ]
+    },
+    "epic": {
+      "display_name": "Epic",
+      "sector": "healthcare",
+      "criticality": 35,
+      "aliases": [
+        "epic systems",
+        "epic hyperspace",
+        "epic mychart"
+      ]
+    },
+    "change_healthcare": {
+      "display_name": "Change Healthcare",
+      "sector": "healthcare",
+      "criticality": 40,
+      "aliases": [
+        "change healthcare"
+      ]
+    },
+    "salesforce": {
+      "display_name": "Salesforce",
+      "sector": "software_as_a_service",
+      "criticality": 25,
+      "aliases": [
+        "salesforce",
+        "salesforce.com"
+      ]
+    },
+    "servicenow": {
+      "display_name": "ServiceNow",
+      "sector": "software_as_a_service",
+      "criticality": 25,
+      "aliases": [
+        "servicenow",
+        "service now"
+      ]
+    },
+    "verizon": {
+      "display_name": "Verizon",
+      "sector": "telecommunications",
+      "criticality": 30,
+      "aliases": [
+        "verizon",
+        "verizon wireless"
+      ]
+    },
+    "att": {
+      "display_name": "AT&T",
+      "sector": "telecommunications",
+      "criticality": 30,
+      "aliases": [
+        "at&t",
+        "at and t"
+      ]
+    },
+    "tmobile": {
+      "display_name": "T-Mobile",
+      "sector": "telecommunications",
+      "criticality": 30,
+      "aliases": [
+        "t-mobile",
+        "tmobile"
+      ]
+    },
+    "comcast": {
+      "display_name": "Comcast",
+      "sector": "telecommunications",
+      "criticality": 30,
+      "aliases": [
+        "comcast",
+        "xfinity"
+      ]
+    }
+  }
+}
