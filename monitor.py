@@ -1,61 +1,135 @@
 import os
-import smtplib
-from email.message import EmailMessage
+import requests
 
-print("Global Network Monitor starting...")
+print("===================================")
+print(" Global Network Monitor")
+print("===================================")
+print()
 
-SMTP_HOST = os.environ["SMTP_HOST"]
-SMTP_PORT = int(os.environ["SMTP_PORT"])
-SMTP_USERNAME = os.environ["SMTP_USERNAME"]
-SMTP_PASSWORD = os.environ["SMTP_PASSWORD"]
-ALERT_FROM = os.environ["ALERT_FROM"]
-ALERT_TO = os.environ["ALERT_TO"]
+token = os.environ["CLOUDFLARE_API_TOKEN"].strip()
 
-message = EmailMessage()
+url = "https://api.cloudflare.com/client/v4/radar/annotations/outages"
 
-message["Subject"] = "[TEST] Global Network Monitor"
-message["From"] = ALERT_FROM
-message["To"] = ALERT_TO
+headers = {
+    "Authorization": f"Bearer {token}",
+    "Accept": "application/json"
+}
 
-message.set_content(
-    """
-Global Network Monitor Test
+params = {
+    "dateRange": "1d",
+    "limit": 20,
+    "format": "json"
+}
 
-Congratulations!
+print("Connecting to Cloudflare Radar...")
+print()
 
-Your GitHub Actions workflow successfully sent this email.
+try:
 
-This confirms:
-
-- GitHub Actions is working
-- Python is working
-- Your GitHub secrets are working
-- SMTP authentication is working
-- Email delivery is working
-
-No actual network outage occurred.
-
-Next step: Connect the monitor to Cloudflare Radar.
-"""
-)
-
-print("Connecting to email server...")
-
-with smtplib.SMTP(SMTP_HOST, SMTP_PORT, timeout=30) as smtp:
-    smtp.ehlo()
-    smtp.starttls()
-    smtp.ehlo()
-
-    print("Authenticating...")
-
-    smtp.login(
-        SMTP_USERNAME,
-        SMTP_PASSWORD
+    response = requests.get(
+        url,
+        headers=headers,
+        params=params,
+        timeout=30
     )
 
-    print("Sending test email...")
+    print("Cloudflare HTTP status:", response.status_code)
 
-    smtp.send_message(message)
+    response.raise_for_status()
 
-print("Email sent successfully!")
-print("Global Network Monitor finished.")
+    data = response.json()
+
+    if not data.get("success", False):
+        print("Cloudflare returned an API error.")
+        print(data.get("errors"))
+        raise SystemExit(1)
+
+    result = data.get("result", {})
+
+    outages = result.get("annotations", [])
+
+    print()
+    print(f"Outages returned: {len(outages)}")
+    print()
+
+    if not outages:
+
+        print("No outage events were returned.")
+
+    else:
+
+        print("Recent Internet outage events:")
+        print()
+
+        for number, event in enumerate(outages, start=1):
+
+            outage = event.get("outage") or {}
+
+            print("-----------------------------------")
+            print(f"Event #{number}")
+            print("-----------------------------------")
+
+            print(
+                "Started:",
+                event.get("startDate", "Unknown")
+            )
+
+            print(
+                "Ended:",
+                event.get("endDate") or "ONGOING"
+            )
+
+            print(
+                "Location:",
+                event.get("locations", "Unknown")
+            )
+
+            print(
+                "ASN:",
+                event.get("asns", "Unknown")
+            )
+
+            print(
+                "Scope:",
+                event.get("scope", "Unknown")
+            )
+
+            print(
+                "Type:",
+                outage.get("outageType", "Unknown")
+            )
+
+            print(
+                "Cause:",
+                outage.get("outageCause", "Unknown")
+            )
+
+            print()
+
+except requests.exceptions.HTTPError as error:
+
+    print()
+    print("Cloudflare rejected the request.")
+    print(error)
+
+    if response.status_code == 401:
+        print()
+        print("Likely problem: API token authentication.")
+
+    if response.status_code == 403:
+        print()
+        print("Likely problem: API token permissions.")
+
+    raise SystemExit(1)
+
+except requests.exceptions.RequestException as error:
+
+    print()
+    print("Unable to connect to Cloudflare Radar.")
+    print(error)
+
+    raise SystemExit(1)
+
+
+print()
+print("Cloudflare Radar test completed successfully.")
