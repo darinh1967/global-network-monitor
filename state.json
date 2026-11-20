@@ -46,19 +46,19 @@
       "status": "ONGOING"
     },
     "b789b2e5020e3552c667": {
-      "alert_count": 1,
+      "alert_count": 2,
       "asns": "Unknown",
       "description": "A fault on the SEA-ME-WE 5 submarine cable off Pakistan's coast caused a drop in Internet traffic across Pakistan",
-      "ended": "ONGOING",
+      "ended": "2026-11-20T08:00:00Z",
       "first_seen": "2026-11-19T18:12:21.350609+00:00",
-      "last_action": "DUPLICATE",
-      "last_alerted": "2026-11-19T18:12:21.350609+00:00",
-      "last_seen": "2026-11-20T07:49:58.486368+00:00",
+      "last_action": "RESOLVED",
+      "last_alerted": "2026-11-20T16:29:54.903140+00:00",
+      "last_seen": "2026-11-20T16:29:54.903140+00:00",
       "location": "PK",
-      "score": 60,
-      "severity": "HIGH",
+      "score": 50,
+      "severity": "MEDIUM",
       "started": "2026-11-18T12:30:00Z",
-      "status": "ONGOING"
+      "status": "RESOLVED"
     }
   }
 }
