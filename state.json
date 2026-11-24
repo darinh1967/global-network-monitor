@@ -61,19 +61,19 @@
       "status": "RESOLVED"
     },
     "ddbdff8db5a835b70f81": {
-      "alert_count": 1,
+      "alert_count": 2,
       "asns": "Unknown",
       "description": "An incident on the high-voltage grid disrupted power in Abidjan and other areas, causing a significant drop in Internet traffic across C\u00f4te d'Ivoire.",
-      "ended": "ONGOING",
+      "ended": "2026-11-23T18:45:00Z",
       "first_seen": "2026-11-23T20:22:30.918682+00:00",
-      "last_action": "DUPLICATE",
-      "last_alerted": "2026-11-23T20:22:30.918682+00:00",
-      "last_seen": "2026-11-24T04:57:13.722532+00:00",
+      "last_action": "RESOLVED",
+      "last_alerted": "2026-11-24T15:45:27.329794+00:00",
+      "last_seen": "2026-11-24T15:45:27.329794+00:00",
       "location": "CI",
-      "score": 60,
-      "severity": "HIGH",
+      "score": 50,
+      "severity": "MEDIUM",
       "started": "2026-11-23T15:30:00Z",
-      "status": "ONGOING"
+      "status": "RESOLVED"
     }
   }
 }
