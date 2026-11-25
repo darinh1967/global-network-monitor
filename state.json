@@ -30,6 +30,21 @@
       "started": "2026-11-18T12:30:00Z",
       "status": "ONGOING"
     },
+    "886bfef77b383db613b3": {
+      "alert_count": 0,
+      "asns": "27653",
+      "description": "to its fiber-optic infrastructure along National Highway #1.",
+      "ended": "ONGOING",
+      "first_seen": "2026-11-25T00:10:45.540897+00:00",
+      "last_action": "NEW_NO_ALERT",
+      "last_alerted": null,
+      "last_seen": "2026-11-25T00:10:45.540897+00:00",
+      "location": "Unknown",
+      "score": 10,
+      "severity": "LOW",
+      "started": "2026-11-24T20:00:00Z",
+      "status": "ONGOING"
+    },
     "91365d6bd17757afa82f": {
       "alert_count": 1,
       "asns": "Unknown",
