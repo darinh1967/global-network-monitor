@@ -15,6 +15,21 @@
       "started": "2026-11-24T20:00:00Z",
       "status": "RESOLVED"
     },
+    "678175d6f576d3f93f67": {
+      "alert_count": 0,
+      "asns": "27653",
+      "description": "Reported damage to infrastructure along National Road 1 caused a complete loss of Internet traffic from Digicel Haiti (AS27653).",
+      "ended": "ONGOING",
+      "first_seen": "2026-11-27T21:08:03.010653+00:00",
+      "last_action": "NEW_NO_ALERT",
+      "last_alerted": null,
+      "last_seen": "2026-11-27T21:08:03.010653+00:00",
+      "location": "Unknown",
+      "score": 10,
+      "severity": "LOW",
+      "started": "2026-11-26T16:00:00Z",
+      "status": "ONGOING"
+    },
     "76d58e204c9d24f09fb4": {
       "alert_count": 0,
       "asns": "15796",
